@@ -1,0 +1,133 @@
+openapi: 3.0.0
+info:
+  title: REST API for Gene ID Conversion
+  version: "1.0.0"
+  description: |
+    Genomic and gene expression data is integral to biomolecular data analysis. The types of identifiers used for genes differ across different resources providing such data sets. The ability to use a single type of gene identifier is imperative for integrating data from two or more resources. This gene ID conversion tool facilitates the use of a common gene identifier. Gene SYMBOL is likely the most common gene ID type a user will search for. A general user does not know in advance whether a gene symbol is indeed a gene SYMBOL or ALIAS. This is often seen for a small percentage of genes with change in the genome/transcriptome version. This tool generates various types of gene IDs (Entrez gene ID, symbol, gene name, Ensembl ID, Uniprot ID, REFSEQ ID, etc.) for a given gene ID type (e.g., symbol or alias). This tool also generate URLs to various commonly used data resources (NCBI Entrez, Ensembl, KEGG, Genecards, etc.). The REST API provides HTTPS-based access to this tool via a web-browser or scripts in several programming languages such as PHP, R, Python, that can handle HTTPS requests.
+    A full-UI non-API version is available at https://bdcw.org/geneid/geneidconv.php. This tool is based on R Bioconductor package org.Xy.eg.db ad NCBI Entrez gene_info. It performs seamless searching in both SYMBOL (first) and ALIAS (if not found in SYMBOL). In the non-API version, when multiple references satisfy a given ID, the user is given an option to choose the specific gene one for which one wants to get further information. 
+  license:
+    name: Gene ID Conversion Terms of Use
+    url: https://bdcw.org/geneid/termsofuse.php
+  contact:
+    url: https://bdcw.org/geneid/contact.php
+servers:
+  - description: Gene ID Conversion
+    url: https://bdcw.org/geneid/rest
+paths:
+  #/species/hsa/GeneIDType/SYMBOL_OR_ALIAS/GeneListStr/PNPLA3/View/json
+  /species/{species_id}/GeneIDType/{geneid_type}/GeneListStr/{gene_id}/View/{json_or_txt}:
+    get:
+      description: Fetch all the different ID types for a gene or a set of genes specified as one gene ID type. The format for the list of genes is GENE1__GENE2 (use __ as separator).
+      parameters:
+      #Types of parameters: https://swagger.io/docs/specification/describing-parameters
+      - in: path
+        name: species_id
+        description: The unique species name or identifier 
+        schema:
+          type: string
+        example: hsa, human, mouse, mmu, rno, rat
+        required: true
+      - in: path
+        name: geneid_type
+        description: The unique Gene ID type such as ENTREZID, SYMBOL, SYMBOL_OR_ALIAS, UNIPROT, ENSEMBL or REFSEQ [and HGNC for hsa]
+        schema:
+          type: string
+        example: SYMBOL
+        required: true
+      - in: path
+        name: gene_id
+        description: The unigue gene identifier in any one of the known formats or double underscore (__) separated list of identifiers corresponding to geneid_type
+        schema:
+          type: string
+          example: HK1, 3098, HK1__RPE, 3098__6120, ENSG00000100344, NM_025225, Q9NST1
+        required: true
+      - in: path
+        name: json_or_txt
+        description: The output (View) format, json or txt
+        schema:
+          type: string
+          example: json, txt
+        required: true
+      responses:
+        #https://swagger.io/docs/specification/describing-responses/
+        '200':
+          description: Result of gene ID conversion as a json object
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  SYMBOL:
+                    type: string
+                    description: Gene Symbol
+                  ENTREZID:
+                    type: string
+                    description: Entrez Gene ID
+                  ALIAS:
+                    type: string
+                    description: Alias for the Gene Symbol
+                  GENENAME:
+                    type: string
+                    description: Full gene name
+                  ENSEMBL:
+                    type: string
+                    description: Ensembl ID for the Gene
+                  REFSEQ:
+                    type: string
+                    description: RefSeq ID for the Gene
+                  UNIPROT:
+                    type: string
+                    description: UniProt ID for the Gene Symbol
+                  KEGG:
+                    type: string
+                    description: ID for the gene in KEGG DB, general same as ENTREZID
+          x-responseValueType:
+          - x-path: SYMBOL
+            x-valueType: https://identifiers.org/ncbigene 
+          - x-path: ENTREZID
+            x-valueType: https://identifiers.org/ncbigene 
+          - x-path: ALIAS
+            x-valueType: https://identifiers.org/ncbigene 
+          - x-path: GENENAME
+            x-valueType: https://identifiers.org/ncbigene 
+          - x-path: ENSEMBL
+            x-valueType: https://identifiers.org/ensembl 
+          - x-path: REFSEQ
+            x-valueType: https://identifiers.org/refseq 
+          - x-path: UNIPROT
+            x-valueType: https://identifiers.org/uniprot
+          - x-path: KEGG
+            x-valueType: https://identifiers.org/kegg.genes
+        '406':
+          description: URL/path format not acceptable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  responses:
+    NotFound:
+      description: The specified resource was not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  schemas:
+    # Schema for error response body
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+      required:
+        - code
+        - message
+        
