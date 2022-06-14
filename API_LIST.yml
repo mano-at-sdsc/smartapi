@@ -7,6 +7,6 @@
 # or temporay fields, e.g. a "notes". Optional of course.
 
 APIs:
-  - metadata: MetGENE_API/MetGENEAPI_openapi.yml
+  - metadata: geneid/geneid_OpenAPI.yml
     extra:
         - notes: ""
