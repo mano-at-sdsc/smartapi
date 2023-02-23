@@ -17,7 +17,7 @@ paths:
   #/species/hsa/GeneIDType/SYMBOL_OR_ALIAS/GeneListStr/PNPLA3/View/json
   /species/{species_id}/GeneIDType/{geneid_type}/GeneListStr/{gene_id}/View/{json_or_txt}:
     get:
-      description: Fetch all the different ID types for a gene or a set of genes specified as one gene ID type. The format for the list of genes is GENE1__GENE2 (use __ as separator).
+      description: Fetch all the different ID types for a gene or a set of genes specified as one gene ID type. The format for the list of genes is GENE1__GENE2 (use comma (,) or __ as separator).
       parameters:
       #Types of parameters: https://swagger.io/docs/specification/describing-parameters
       - in: path
@@ -36,10 +36,10 @@ paths:
         required: true
       - in: path
         name: gene_id
-        description: The unigue gene identifier in any one of the known formats or double underscore (__) separated list of identifiers corresponding to geneid_type
+        description: The unigue gene identifier in any one of the known formats or a comma (or double underscore __) separated list of identifiers corresponding to geneid_type
         schema:
           type: string
-          example: HK1, 3098, HK1__RPE, 3098__6120, ENSG00000100344, NM_025225, Q9NST1
+          example: HK1, 3098, HK1,RPE, HK1__RPE, 3098__6120, ENSG00000100344, NM_025225, Q9NST1
         required: true
       - in: path
         name: json_or_txt
