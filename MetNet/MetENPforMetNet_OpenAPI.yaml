@@ -1,0 +1,172 @@
+openapi: 3.0.0
+info:
+  title: REST API for MetNet
+  version: "1.0.0"
+  description: |
+    Given a list of metabolites, e.g., metabolites with significant change between two conditions such as disease/normal or treatment/control in a metabolomics study using MetENP, or obtained otherwise, a metabolomics researcher may want to find what are the pathways and functions affected. Our previous tool called MetENP (https://github.com/metabolomicsworkbench/MetENP; the user is strongly encouraged to understand MetENP before using this REST API) provides lists of metabolic pathways affected, but does not provide such information for the signaling/regulatory pathways affected, e.g., through protein-protein interaction (PPI). MetNet, a metabolite-centric tool, allows one to fill that gap. MetNet uses several features from MetENP such as metabolite name harmonization using REFMET, metabolite class enrichment, metabolic pathway enrichment and visualization and identification of reactions related to the given metabolites and the genes (enzymes) catalyzing these reactions. The gene list is used to develop their protein-protein interaction network using STRING-DB APIs. While this MetNet REST API can be used in stand-alone mode, it is best used through a workflow development tool such as NIH CFDE Workflow Builder Tool (WBT) available at https://playbook-workflow-builder.cloud (and https://github.com/nih-cfde/playbook-partnership/; please note that some features of this API may be available only in a separate development instance available at https://github.com/metabolomicsworkbench/playbook-partnership/tree/playbook-partnership-mano-20221129). Downstream of the metabolite-related gene list, using the WBT, one can develop gene regulatory networks and then perform functional interpretation through pathway/gene set enrichment. The WBT also allows one to use our MetGENE API (https://github.com/metabolomicsworkbench/MetGENE and https://smart-api.info/ui/342e4cec92030d74efd84b61650fb0ea), where, starting with one or more genes, one can identify the related reactions and metabolites that can serve as a starting list of metabolites for MetENPNet. The MetNet REST API provides HTTPS-based access to MetNet via a web-browser or scripts in several programming languages such as PHP, R, Python, that can handle HTTPS requests. The results are provided as a json object or a table with the columns FileDescription and FileURL. The components of the results can be accessed following these URLs. Please note that in the REST interface, the order of the parameters is fixed.
+  license:
+    name: License for MetNet is same as that for MetENP
+    url: https://github.com/metabolomicsworkbench/MetENP/blob/main/LICENSE
+  contact:
+    email: mano@sdsc.edu
+servers:
+  - description: MetNet (Metabolite enrichment, pathways and networks)
+    url: https://bdcw.org/MetENP/rest
+paths:
+  #List of metabolites directly specified
+  #https://sc-cfdewebdev.sdsc.edu//MetENP/rest/metclass/sub_class/updown_fillcolor/red__green__blue/enrich_stats/HG/no/1/sps/hsa/padj/fdr/kegg_comp_path/FALSE/geneoption/TRUE/PPIopt/1_1000_400/location/0/metlistfname/NAD%25252B%25255CnNADH%25255CnNADPH%25255CnNADP%25252B%25255CnGlucose%2525206-phosphate%25255Cn6-Phosphonoglucono-D-lactone%25255CnRibulose%2525205-phosphate%25255Cn6-Phosphogluconic%252520acid%25255CnXylulose%2525205-phosphate%25255CnGlyceraldehyde%2525203-phosphate%25255CnErythrose%2525204-phosphate%25255CnSedoheptulose%2525207-phosphate%25255CnFructose%2525206-phosphate%25255CnRibose%2525205-phosphate%25255CnATP%25255CnADP%25255CnXylulose/View/json
+  #and list of metabolites specified in a web-accessible file
+  #https://sc-cfdewebdev.sdsc.edu//MetENP/rest/metclass/sub_class/updown_fillcolor/red__green__blue/enrich_stats/HG/no/1/sps/hsa/padj/fdr/kegg_comp_path/FALSE/geneoption/TRUE/PPIopt/1_1000_400/location/1/metlistfname/https%25253A%25252F%25252Fsc-cfdewebdev.sdsc.edu%25252Ftmp%25252Fmetlist.txt/View/json
+  /metclass/{metclass}/updown_fillcolor/{updown_fillcolor}/enrich_stats/{enrich_stats}/no/{min_num}/sps/{species_id}/padj/{padj}/kegg_comp_path/{kegg_comp_path}/geneoption/{geneoption}/PPIopt/{PPIopt}/location/{location}/metlistfname/{metlistfname}/View/{json_or_txt}:
+    get:
+      description: Perform MetENP analysis for a list of metabolites specified in a file or directly as a parameter, followed by development of a PPI network of the genes associated with the metabolites. The file URL or direct list of metabolites (separated by \n) is encoded thrice. This is because the server performs automatic decoding twice. Hence, to retain  encoded (once) URL or list, tripple encoding is required in the current version.
+      parameters:
+      #Types of parameters: https://swagger.io/docs/specification/describing-parameters
+      - in: path
+        name: metclass
+        description: Level of metabolite class enrichment 
+        schema:
+          type: string
+        example: sub_class, main_class, super_class
+        required: true
+        #
+      - in: path
+        name: updown_fillcolor
+        description: Color scheme used in metabolite class count 
+        schema:
+          type: string
+        example: red__green__blue [red for count of metabolites increased, green for count of metabolites decreased and blue for not differentiating or when fold-change is not available]
+        required: true
+        #
+      - in: path
+        name: enrich_stats
+        description: Method used for enrichment such as hypergeometric distribution
+        schema:
+          type: string
+        example: HG for hypergeometric distribution
+        required: true
+        #
+      - in: path
+        name: min_num
+        description: Minimum number of metabolites in a pathway/class needed to include in the results 
+        schema:
+          type: integer
+        example: 1, 2, or 3 [decrease this number if results do not include an expected pathway/class]
+        required: true
+        #
+      - in: path
+        name: species_id
+        description: The unique species name as its three letter code 
+        schema:
+          type: string
+        example: hsa [for Human], mmu [for Mouse], rno [for Rat]
+        required: true
+        #
+      - in: path
+        name: padj
+        description: Method to compute adjust p-value for metabolite/class enrichment 
+        schema:
+          type: string
+        example: fdr, BH, holm, hochberg, hommel, bonferroni, BY [see R function p.adjust]
+        required: true
+        #
+      - in: path
+        name: kegg_comp_path
+        description: If enrichment using full list of KEGG pathways should be performed 
+        schema:
+          type: string
+        example: TRUE or FALSE
+        required: true
+        #
+      - in: path
+        name: geneoption
+        description: If the reactions and genes/enzymes related to the metabolites should be identified
+        schema:
+          type: string
+        example: TRUE or FALSE
+        required: true
+        #
+      - in: path
+        name: PPIopt
+        description: Options for identifying PPI using STRING-DB in the format 1_1000_400 where the first number means yes (1, i.e., indeed identify PPI) or no (0; then other parameters are meaningless), the second number 1000 denotes the maximum number of edges per gene/protein (https://string-db.org/cgi/help.pl?subpage=api%23getting-all-the-string-interaction-partners-of-the-protein-set ; reduce this number if API returns without completing) and the third number 400 denotes the score cutoff (between 0 and 1000; 400 is moderate, 700 is high, 900 is very high).
+        schema:
+          type: string
+          example: 1_1000_400, 1_1500_700
+        required: true
+        #
+      - in: path
+        name: location
+        description: If the next parameter is a URL to a file location/path (1) or no (0)
+        schema:
+          type: integer
+          example: 1 or 0
+        required: true
+        #
+      - in: path
+        name: metlistfname
+        description: Tripple encoded (1) URL to the file with list of metabolites (one metabolite per line) or (2) the full string of list of metabolites separated by \n. This requirement makes it difficult to directly use this API. However, to get an example, one can leave the value of this argument unspecified so that the API can provide an example in the message. In tripple encoding, / becomes %25252F. If it appears as %2525252F, then it has been encoded one extra time by the OpenAPI interpreter. In that case, please replace the leading %25 with % at all places once.
+        schema:
+          type: string
+          example: https%253A%252F%252Fsc-cfdewebdev.sdsc.edu%252Ftmp%252Fmetlist.txt (file URL) or NAD%252B%255CnNADH%255CnNADPH%255CnNADP%252B%255CnGlucose%25206-phosphate%255Cn6-Phosphonoglucono-D-lactone%255CnRibulose%25205-phosphate%255Cn6-Phosphogluconic%2520acid%255CnXylulose%25205-phosphate%255CnGlyceraldehyde%25203-phosphate%255CnErythrose%25204-phosphate%255CnSedoheptulose%25207-phosphate%255CnFructose%25206-phosphate%255CnRibose%25205-phosphate%255CnATP%255CnADP%255CnXylulose (list of metabolites directly specified)
+        required: true
+        #
+      - in: path
+        name: json_or_txt
+        description: The output (View) format, json or txt
+        schema:
+          type: string
+          example: json, txt
+        required: true
+      responses:
+        #https://swagger.io/docs/specification/describing-responses/
+        '200':
+          description: Result of applying MetENP on a list of metabolites [list of URLs of the component files as a json object]
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  FileDescription:
+                    type: string
+                    description: Description of the file containing a specific result, e.g., count plot, enrichment or gene list
+                  FileURL:
+                    type: string
+                    description: URL for the file described
+          x-responseValueType:
+          - x-path: FileDescription
+            x-valueType: string
+          - x-path: FileURL
+            x-valueType: url
+        '406':
+          description: URL/path format not acceptable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  responses:
+    NotFound:
+      description: The specified resource was not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  schemas:
+    # Schema for error response body
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+      required:
+        - code
+        - message
+        
